@@ -15,7 +15,7 @@ from scipy.special import softmax
 
 
 
-def prepare_main_input(audioFile, visualFeaturesFile, targetFile, noise, reqInpLen, charToIx, noiseSNR, audioParams, videoParams):
+def prepare_main_input(audioFile, videoFile, targetFile, noise, reqInpLen, charToIx, noiseSNR, audioParams, videoParams):
 
     """
     Function to convert the data sample in the main dataset into appropriate tensors.
@@ -44,6 +44,11 @@ def prepare_main_input(audioFile, visualFeaturesFile, targetFile, noise, reqInpL
     stftOverlap = audioParams["stftOverlap"]
     sampFreq, inputAudio = wavfile.read(audioFile)
 
+    # Video parameters for preprocessing
+    roiSize = videoParams["roiSize"]
+    normMean = videoParams["normMean"]
+    normStd = videoParams["normStd"]
+
     #pad the audio to get atleast 4 STFT vectors
     if len(inputAudio) < sampFreq*(stftWinLen + 3*(stftWinLen - stftOverlap)):
         padding = int(np.ceil((sampFreq*(stftWinLen + 3*(stftWinLen - stftOverlap)) - len(inputAudio))/2))
@@ -69,8 +74,26 @@ def prepare_main_input(audioFile, visualFeaturesFile, targetFile, noise, reqInpL
     audInp = audInp.T
 
 
-    #loading the visual features
-    vidInp = np.load(visualFeaturesFile)
+    # preprocess video inputs
+    captureObj = cv.VideoCapture(videoFile)
+    roiSequence = list()
+    while (captureObj.isOpened()):
+        ret, frame = captureObj.read()
+        if ret == True:
+            grayed = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+            grayed = grayed/255
+            grayed = cv.resize(grayed, (224,224))
+            roi = grayed[int(112-(roiSize/2)):int(112+(roiSize/2)), int(112-(roiSize/2)):int(112+(roiSize/2))]
+            roiSequence.append(roi)
+        else:
+            break
+    captureObj.release()
+
+
+    #normalise the frames
+    inp = np.stack(roiSequence, axis=0)
+    inp = np.expand_dims(inp, axis=[1,2])
+    vidInp = (inp - normMean)/normStd
 
 
     #padding zero vectors to extend the audio and video length to a least possible integer length such that
@@ -82,7 +105,7 @@ def prepare_main_input(audioFile, visualFeaturesFile, targetFile, noise, reqInpL
         audInp = np.pad(audInp, ((leftPadding,rightPadding),(0,0)), "constant")
         leftPadding = int(np.floor((inpLen - len(vidInp))/2))
         rightPadding = int(np.ceil((inpLen - len(vidInp))/2))
-        vidInp = np.pad(vidInp, ((leftPadding,rightPadding),(0,0)), "constant")
+        vidInp = np.pad(vidInp, ((leftPadding,rightPadding),(0,0),(0,0)), "constant")
     else:
         inpLen = len(vidInp)
         leftPadding = int(np.floor((4*inpLen - len(audInp))/2))
@@ -96,7 +119,7 @@ def prepare_main_input(audioFile, visualFeaturesFile, targetFile, noise, reqInpL
         leftPadding = int(np.floor((reqInpLen - inpLen)/2))
         rightPadding = int(np.ceil((reqInpLen - inpLen)/2))
         audInp = np.pad(audInp, ((4*leftPadding,4*rightPadding),(0,0)), "constant")
-        vidInp = np.pad(vidInp, ((leftPadding,rightPadding),(0,0)), "constant")
+        vidInp = np.pad(vidInp, ((leftPadding,rightPadding),(0,0),(0,0)), "constant")
 
     inpLen = len(vidInp)
 
@@ -115,7 +138,7 @@ def prepare_main_input(audioFile, visualFeaturesFile, targetFile, noise, reqInpL
 
 
 
-def prepare_pretrain_input(audioFile, visualFeaturesFile, targetFile, noise, numWords, charToIx, noiseSNR, audioParams, videoParams):
+def prepare_pretrain_input(audioFile, visualFile, targetFile, noise, numWords, charToIx, noiseSNR, audioParams, videoParams):
 
     """
     Function to convert the data sample in the pretrain dataset into appropriate tensors.
@@ -133,7 +156,7 @@ def prepare_pretrain_input(audioFile, visualFeaturesFile, targetFile, noise, num
     if len(words) <= numWords:
         trgtNWord = trgt
         sampFreq, inputAudio = wavfile.read(audioFile)
-        vidInp = np.load(visualFeaturesFile)
+        vidInp = np.load(visualFile)
 
     else:
         #make a list of all possible sub-sequences with required number of words in the target
@@ -154,7 +177,7 @@ def prepare_pretrain_input(audioFile, visualFeaturesFile, targetFile, noise, num
         inputAudio = audio[int(sampFreq*startTime):int(sampFreq*endTime)]
         #loading visual features
         videoFPS = videoParams["videoFPS"]
-        vidInp = np.load(visualFeaturesFile)
+        vidInp = np.load(visualFile)
         vidInp = vidInp[int(np.floor(videoFPS*startTime)):int(np.ceil(videoFPS*endTime))]
 
 

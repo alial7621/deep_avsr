@@ -24,14 +24,6 @@ def main():
     gpuAvailable = torch.cuda.is_available()
     device = torch.device("cuda" if gpuAvailable else "cpu")
 
-
-
-    #declaring the visual frontend module
-    vf = VisualFrontend()
-    vf.load_state_dict(torch.load(args["TRAINED_FRONTEND_FILE"], map_location=device))
-    vf.to(device)
-
-
     #walking through the data directory and obtaining a list of all files in the dataset
     filesList = list()
     for root, dirs, files in os.walk(args["DATA_DIRECTORY"]):
@@ -44,9 +36,9 @@ def main():
     print("\nNumber of data samples to be processed = %d" %(len(filesList)))
     print("\n\nStarting preprocessing ....\n")
 
-    params = {"roiSize":args["ROI_SIZE"], "normMean":args["NORMALIZATION_MEAN"], "normStd":args["NORMALIZATION_STD"], "vf":vf}
+    # remove params
     for file in tqdm(filesList, leave=True, desc="Preprocess", ncols=75):
-        preprocess_sample(file, params)
+        preprocess_sample(file)
 
     print("\nPreprocessing Done.")
 

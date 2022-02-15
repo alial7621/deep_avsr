@@ -36,7 +36,8 @@ def main():
 
     #declaring the train and validation datasets and their corresponding dataloaders
     audioParams = {"stftWindow":args["STFT_WINDOW"], "stftWinLen":args["STFT_WIN_LENGTH"], "stftOverlap":args["STFT_OVERLAP"]}
-    videoParams = {"videoFPS":args["VIDEO_FPS"]}
+    # Adding required parameters
+    videoParams = {"videoFPS":args["VIDEO_FPS"],"roiSize":args["ROI_SIZE"], "normMean":args["NORMALIZATION_MEAN"], "normStd":args["NORMALIZATION_STD"]}
     noiseParams = {"noiseFile":args["DATA_DIRECTORY"] + "/noise.wav", "noiseProb":args["NOISE_PROBABILITY"], "noiseSNR":args["NOISE_SNR_DB"]}
     trainData = LRS2Main("train", args["DATA_DIRECTORY"], args["MAIN_REQ_INPUT_LENGTH"], args["CHAR_TO_INDEX"], args["STEP_SIZE"],
                          audioParams, videoParams, noiseParams)
@@ -150,6 +151,8 @@ def main():
             plt.close()
 
 
+    # save the weights of the model for testing purposes
+    torch.save(model.state_dict(), "Add the directory")
     print("\nTraining Done.\n")
 
     return

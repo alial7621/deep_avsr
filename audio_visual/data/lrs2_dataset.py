@@ -49,13 +49,14 @@ class LRS2Pretrain(Dataset):
 
         #passing the sample files and the target file paths to the prepare function to obtain the input tensors
         audioFile = self.datalist[index] + ".wav"
-        visualFeaturesFile = self.datalist[index] + ".npy"
+        # change from .npy to .mp4
+        visualFile = self.datalist[index] + ".mp4"
         targetFile = self.datalist[index] + ".txt"
         if np.random.choice([True, False], p=[self.noiseProb, 1-self.noiseProb]):
             noise = self.noise
         else:
             noise = None
-        inp, trgt, inpLen, trgtLen = prepare_pretrain_input(audioFile, visualFeaturesFile, targetFile, noise, self.numWords,
+        inp, trgt, inpLen, trgtLen = prepare_pretrain_input(audioFile, visualFile, targetFile, noise, self.numWords,
                                                             self.charToIx, self.noiseSNR, self.audioParams, self.videoParams)
         return inp, trgt, inpLen, trgtLen
 
@@ -103,13 +104,14 @@ class LRS2Main(Dataset):
 
         #passing the sample files and the target file paths to the prepare function to obtain the input tensors
         audioFile = self.datalist[index] + ".wav"
-        visualFeaturesFile = self.datalist[index] + ".npy"
+        # change from .npy to .mp4
+        videoFile = self.datalist[index] + ".mp4"
         targetFile = self.datalist[index] + ".txt"
         if np.random.choice([True, False], p=[self.noiseProb, 1-self.noiseProb]):
             noise = self.noise
         else:
             noise = None
-        inp, trgt, inpLen, trgtLen = prepare_main_input(audioFile, visualFeaturesFile, targetFile, noise, self.reqInpLen, self.charToIx,
+        inp, trgt, inpLen, trgtLen = prepare_main_input(audioFile, videoFile, targetFile, noise, self.reqInpLen, self.charToIx,
                                                         self.noiseSNR, self.audioParams, self.videoParams)
         return inp, trgt, inpLen, trgtLen
 

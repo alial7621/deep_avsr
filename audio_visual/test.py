@@ -32,7 +32,8 @@ def main():
 
     #declaring the test dataset and test dataloader
     audioParams = {"stftWindow":args["STFT_WINDOW"], "stftWinLen":args["STFT_WIN_LENGTH"], "stftOverlap":args["STFT_OVERLAP"]}
-    videoParams = {"videoFPS":args["VIDEO_FPS"]}
+    # Adding required parameters
+    videoParams = {"videoFPS":args["VIDEO_FPS"],"roiSize":args["ROI_SIZE"], "normMean":args["NORMALIZATION_MEAN"], "normStd":args["NORMALIZATION_STD"]}
     if args["TEST_DEMO_NOISY"]:
         noiseParams = {"noiseFile":args["DATA_DIRECTORY"] + "/noise.wav", "noiseProb":1, "noiseSNR":args["NOISE_SNR_DB"]}
     else:
